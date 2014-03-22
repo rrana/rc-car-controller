@@ -108,11 +108,11 @@ with SocketIO('http://localhost', 80) as socketIO:
                 user_commands = []
                 robot_status = {}
                 
-                camera.capture('camera_shot.jpg', format='jpeg', use_video_port=True)
+                camera.capture('public/camera_shot.jpg', format='jpeg', use_video_port=True)
                 # Construct a numpy array from the stream
                 data = np.fromstring(stream.getvalue(), dtype=np.uint8)
                 #raw_image = cv2.imdecode(data, 1)
-                raw_image = cv2.imread('camera_shot.jpg')
+                raw_image = cv2.imread('public/camera_shot.jpg')
                 after_image = raw_image
                 if ai_mode:
                     ai_step (raw_image)
