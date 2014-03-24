@@ -120,8 +120,6 @@ io.sockets.on('connection', function (socket) {
     socket.broadcast.emit('robot status', { 'data': data });
     socket.broadcast.emit('robot camera', {'data': 'check'});
   });
-  
-  setInterval(function(){socket.emit('robot camera', {'data': 'check'});},1000);
 });
 
 // ----- Johnny Five -----

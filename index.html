@@ -195,11 +195,16 @@
             $('#robot-connect-status').val('Connected to: ' + address);
             robotReady = true;
           }
+          else {
+            for (var key in status) {
+              //status[key];
+            }
+          }
         });
         
         socket.on('robot camera', function () {
+          d = new Date();
           //$("#image-robot-camera").src=image;
-          console.log('test');
           $("#image-robot-camera").attr("src", "car_cam_post.jpeg?"+d.getTime());
         });
         
@@ -214,14 +219,6 @@
           socket.emit('robot command', { data: command });
         }
       }
-      function refreshStatus () {
-        d = new Date();
-        //$("#image-robot-camera").attr("src", "car_cam_post.jpeg?"+d.getTime());
-        
-        //setTimeout("refreshStatus()", 1*1000);
-      }
-      
-      refreshStatus();
     </script>
   </body>
 </html>

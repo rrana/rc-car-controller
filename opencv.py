@@ -50,7 +50,14 @@ def ai_step(raw_image):
         pass
 
 def detect_red(raw_image):
+    #convert to HSV
+    hsv = cv2.cvtColor(raw_image, cv2.COLOR_BGR2HSV)
     
+    #http://docs.opencv.org/trunk/doc/py_tutorials/py_imgproc/py_colorspaces/py_colorspaces.html
+    lower_red = np.array([60,50,50])
+    upper_red = np.array([60,255,255])
+    
+    mask = cv2.inRange(hsv, lower_red, upper_red)
     
     log('-----')
 
