@@ -41,28 +41,17 @@ def log(text):
 
 def ai_step(raw_image):
     #Generate desired heading and direction given a robot mode
-    if ai_mode == 'lines':
-        robot_status = detect_line(raw_image)
+    if ai_mode == 'red':
+        robot_status = detect_red(raw_image)
     elif ai_mode == 'face':
         robot_status = detect_face(raw_image)
     
     if robot_status:
         pass
 
-def detect_line(raw_image):
-    gray = cv2.cvtColor(raw_image,cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray,150,200,apertureSize = 3)
+def detect_red(raw_image):
     
-    #adjust HoughLine properties
-    lines = cv2.HoughLinesP(edges,1,np.pi/100,50)
-    if lines != None:
-        for line in lines[0]:
-            #print rho
-            #print theta
-            log(line)
-            pt1 = (line[0],line[1])
-            pt2 = (line[2],line[3])
-            cv2.line(raw_image, pt1, pt2, (0,0,255), 3)
+    
     log('-----')
 
 def detect_face(raw_image):
