@@ -1,12 +1,45 @@
+/*** Robot Controller Script
+ * application for controlling the RC car through a web browser
+ * parts:
+ * * express.js - serves webpage for direct robot management
+ * * socket.io - streams information
+ * * johnny-five - interacts with the Arduino, and the RC car by extension
+ * run in conjunction with python opencv.py for AI commands
+ *
+ * Command line options:
+ * * noArduino - skip all johnny-five content
+*/
+
+var args = process.argv.slice(2);
+
+// Consider adding option to automatically start python script:
+//http://shapeshed.com/command-line-utilities-with-nodejs/
+
 var express = require('express')
 var app = express()
   , server = require('http').createServer(app)
   , io = require('socket.io').listen(server);
 
-var five = require("johnny-five"),
-  board, servo;
-
-var servos = {};
+if (args.indexOf("noArduino") == -1) {
+  var five = require("johnny-five")
+    , board, servo;
+  
+  var arduinoServos = {};
+  var accelerationServo = {
+    pin: 9,
+    range: [0, 180],    // Default: 0-180
+    type: "standard",   // Default: "standard". Use "continuous" for continuous rotation servos
+    startAt: 90,          // if you would like the servo to immediately move to a degree
+    center: false         // overrides startAt if true and moves the servo to the center of the range
+  }
+  var steeringServo = {
+    pin: 8, 
+    range: [40, 100], 
+    type: "standard", 
+    startAt: 75, 
+    center: true, 
+  }
+}
 
 stringValues = {
   //throttle
@@ -19,7 +52,7 @@ stringValues = {
   'neutral': 75,
 }
 
-robotStatus = {
+serverStatus = {
     hasArduino: false,
     hasCamera: false,
 }
@@ -40,7 +73,7 @@ io.sockets.on('connection', function (socket) {
     console.log('----- Command: -----');
     console.log(parsedCommand);
     
-    if (robotStatus.hasArduino) {
+    if (serverStatus.hasArduino) {
       // Manual commands
       if (parsedCommand[0] == 'manual') {
         if (parsedCommand[1] == 'throttle') {
@@ -64,62 +97,70 @@ io.sockets.on('connection', function (socket) {
         steerChange(stringValues['neutral']);
         accelChange(stringValues['stop']);
       }
+      // AI commands
+      if (parsedCommand[0] == 'face') {
+        if (parsedCommand[1] == 'begin') {
+          socket.broadcast.emit('robot ai', { 'command': 'face-start' });
+        }
+        else {
+          socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
+        }
+      }
+      if (parsedCommand[0] == 'red') {
+        if (parsedCommand[1] == 'begin') {
+          socket.broadcast.emit('robot ai', { 'command': 'red-start' });
+        }
+        else {
+          socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
+        }
+      }
     }
   });
   socket.on('robot update', function (data) {
-    socket.emit('robot status', { 'data': data });
-    socket.emit('robot camera', {'data': 'check'});
+    socket.broadcast.emit('robot status', { 'data': data });
+    socket.broadcast.emit('robot camera', {'data': 'check'});
   });
   
   setInterval(function(){socket.emit('robot camera', {'data': 'check'});},1000);
 });
 
 // ----- Johnny Five -----
+// These should only be called or accessed if "noArduino" is not an option
 
 function steerChange (value) {
-  servos.steering.move(value);
+  arduinoServos.steering.move(value);
   
   board.repl.inject({
-    s: servos
-  });
+    s: arduinoServos
+    });
 }
 
 function accelChange (value) {
-  servos.acceleration.move(value);
+  arduinoServos.acceleration.move(value);
   
   board.repl.inject({
-    s: servos
+    s: arduinoServos
   });
 }
 
-board = new five.Board();
+if (args.indexOf("noArduino") == -1) {
+  board = new five.Board();
 
-board.on("ready", function() {
-  servos = {
-    acceleration: new five.Servo({
-      pin: 9,
-      range: [0, 180], // Default: 0-180
-      type: "standard", // Default: "standard". Use "continuous" for continuous rotation servos
-      startAt: 90, // if you would like the servo to immediately move to a degree
-      center: false // overrides startAt if true and moves the servo to the center of the range
-    }),
-    steering: new five.Servo({
-      pin: 8, 
-      range: [40, 100], 
-      type: "standard", 
-      startAt: 75, 
-      center: true, 
-    })
-  };
-  acceleration = servos.acceleration;
-  steering = servos.steering;
- 
-  // Inject the `servo` hardware into
-  // the Repl instance's context;
-  // allows direct command line access
-  board.repl.inject({
-    s: servos
+  board.on("ready", function() {
+    arduinoServos = {
+      acceleration: new five.Servo(accelerationServo),
+      steering: new five.Servo(steeringServo)
+    };
+    acceleration = arduinoServos.acceleration;
+    steering = arduinoServos.steering;
+   
+    // Inject the `servo` hardware into
+    // the Repl instance's context;
+    // allows direct command line access
+    board.repl.inject({
+      s: arduinoServos
+    });
+    
+    serverStatus.hasArduino = true;
   });
-  
-  robotStatus.hasArduino = true;
-});
+}

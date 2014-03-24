@@ -85,10 +85,12 @@
                   <div class="tab-pane" id="control-face">
                     <h4>Controls</h4>
                     <button type="button" id="control-face-begin" class="btn btn-success">Start Following Faces</button>
+                    <button type="button" id="control-face-stop" class="btn btn-warning">Stop Faces Routine</button>
                   </div>
                   <div class="tab-pane" id="control-line">
                     <h4>Controls</h4>
-                    <button type="button" id="control-line-begin" class="btn btn-success">Start Following Line</button>
+                    <button type="button" id="control-red-begin" class="btn btn-success">Start Following Red Block</button>
+                    <button type="button" id="control-red-stop" class="btn btn-warning">Stop Red Block Routine</button>
                   </div>
                 </div>
               </div>
@@ -147,8 +149,10 @@
         $('#control-manual-turn-right').on('mouseup', function(){sendCommand('manual-turn-neutral')});
         
         $('#control-face-begin').click(function(){sendCommand('face-begin')});
+        $('#control-face-stop').click(function(){sendCommand('face-stop')});
         
-        $('#control-line-begin').click(function(){sendCommand('line-begin')});
+        $('#control-red-begin').click(function(){sendCommand('red-begin')});
+        $('#control-red-stop').click(function(){sendCommand('red-stop')});
       });
       
       function keyboardEvent (event) {

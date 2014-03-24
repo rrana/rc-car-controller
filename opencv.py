@@ -95,14 +95,26 @@ def detect_face(raw_image):
             pass
     log('-----')
 
+def update_ai(*data):
+    print '--- Implementing ---'
+    print data['command']
+    if data['command'] = 'face-start':
+        ai_mode = 'face'
+    elif data['command'] = 'red-start':
+        ai_mode = 'red'
+    #ai-stop
+    else:
+        ai_mode = ''
+
 #Communicate through socket.io
 with SocketIO('http://localhost', 80) as socketIO:
+    socketIO.on('robot ai', update_ai)
+    
     #Streaming through picamera, so initialize outside loop
     with picamera.PiCamera() as camera:
         camera.resolution = (CAMERA_WIDTH, CAMERA_HEIGHT)
         camera.start_recording(stream, format='h264')
         camera.start_preview()
-        ai_mode = 'face'
         try:
             while run_loop:
                 user_commands = []
@@ -119,10 +131,8 @@ with SocketIO('http://localhost', 80) as socketIO:
                     cv2.imwrite("public/car_cam_post.jpeg", after_image)
                     
                     socketIO.emit('robot update', {'data': robot_status})
-                    test = 0
                     for command in user_commands:
                         socketIO.emit('robot command', {'data': command})
                         log('Command: ' + str(command))
-                        test += 1
         finally:
             camera.stop_recording()
