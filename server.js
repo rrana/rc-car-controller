@@ -25,6 +25,7 @@ if (args.indexOf("noArduino") == -1) {
     , board, servo;
   
   var arduinoServos = {};
+  var throttleTimeout;
   var accelerationServo = {
     pin: 9,
     range: [0, 180],    // Default: 0-180
@@ -43,9 +44,10 @@ if (args.indexOf("noArduino") == -1) {
 
 stringValues = {
   //throttle
-  'forward': 55,
+  'forward': 65,
   'reverse': 105,
   'stop': 90,
+  'throttleTime': 500,
   //steering
   'left': 40,
   'right': 100,
@@ -77,11 +79,14 @@ io.sockets.on('connection', function (socket) {
       // Manual commands
       if (parsedCommand[0] == 'manual') {
         if (parsedCommand[1] == 'throttle') {
+          if (parsedCommand.length < 4) {
+            parsedCommand[3] = stringValues['throttleTime'];
+          }
           if (parsedCommand[2] in stringValues) {
-            accelChange(stringValues[parsedCommand[2]]);
+            accelChange(stringValues[parsedCommand[2]], parsedCommand[3]);
           }
           else {
-            accelChange(parseInt(parsedCommand[2]));
+            accelChange(parseInt(parsedCommand[2]), parsedCommand[3]);
           }
         }
         else if (parsedCommand[1] == 'turn') {
@@ -122,7 +127,6 @@ io.sockets.on('connection', function (socket) {
     updatedData['Arduino Attached'] = serverStatus.hasArduino;
     
     socket.broadcast.emit('robot status', { 'data': updatedData });
-    socket.broadcast.emit('robot camera', {'data': 'check'});
   });
 });
 
@@ -134,10 +138,17 @@ function steerChange (value) {
   
   board.repl.inject({
     s: arduinoServos
-    });
+  });
 }
 
-function accelChange (value) {
+function accelChange (value, accelFor) {
+  if (accelFor) {
+    if (throttleTimeout) {
+      clearTimeout(throttleTimeout);
+    }
+    throttleTimeout = setTimeout(function(){accelChange(stringValues['stop'])}, accelFor);
+  }
+  
   arduinoServos.acceleration.move(value);
   
   board.repl.inject({

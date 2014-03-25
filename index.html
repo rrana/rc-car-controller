@@ -96,7 +96,7 @@
                 <table id='robot-status' class="table table-condensed">
                   <tr><th>Data</th><th>Value</th></tr>
                   <tr>
-                    <td></td><td>Coming Soon</td>
+                    <td></td><td></td>
                   </tr>
                 </table>
               </div>
@@ -183,6 +183,7 @@
         socket = io.connect(address);
         socket.on('robot status', function (data) {
           var status = data.data;
+          // Initial connection
           if (status == 'server connected') {
             $('#connect-formfield').hide();
             $('#connect-status').show();
@@ -192,19 +193,19 @@
             $('#robot-connect-status').val('Connected to: ' + address);
             robotReady = true;
           }
+          // Subsequent updates (consider separating into difference calls)
           else {
+            // Build status table
             var newStatus = '<tr><th>Data</th><th>Value</th></tr>\n';
             for (var key in status) {
               newStatus += '<tr><td>' + key + '</td><td>' + status[key] + '</td></tr>\n';
             }
             $("#robot-status").html(newStatus);
+            
+            // Update Robot camera jpg image (date ensures no retrieval from cache)
+            d = new Date();
+            $("#image-robot-camera").attr("src", "car_cam_post.jpeg?"+d.getTime());
           }
-        });
-        
-        socket.on('robot camera', function () {
-          d = new Date();
-          //$("#image-robot-camera").src=image;
-          $("#image-robot-camera").attr("src", "car_cam_post.jpeg?"+d.getTime());
         });
         
         socket.on('log', function (data) {

@@ -11,6 +11,7 @@ Receives robot commands from socket
 import os
 import json
 import io
+import datetime
 import time
 import picamera
 import cv2
@@ -118,7 +119,7 @@ with SocketIO('http://localhost', 80) as socketIO:
         try:
             while run_loop:
                 user_commands = []
-                robot_status = {}
+                robot_status = {'Timestamp': str(datetime.datetime.now())}
                 robot_status ['Has Camera'] = True
 
                 camera.capture('public/camera_shot.jpg', format='jpeg', use_video_port=True)
