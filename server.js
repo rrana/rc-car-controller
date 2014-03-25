@@ -43,8 +43,8 @@ if (args.indexOf("noArduino") == -1) {
 
 stringValues = {
   //throttle
-  'forward': 35,
-  'reverse': 125,
+  'forward': 55,
+  'reverse': 105,
   'stop': 90,
   //steering
   'left': 40,
@@ -93,12 +93,9 @@ io.sockets.on('connection', function (socket) {
           }
         }
       }
-      else {    // parsedCommand[0] = 'stop'
-        steerChange(stringValues['neutral']);
-        accelChange(stringValues['stop']);
-      }
       // AI commands
-      if (parsedCommand[0] == 'face') {
+      else if (parsedCommand[0] == 'face') {
+        console.log('facing');
         if (parsedCommand[1] == 'begin') {
           socket.broadcast.emit('robot ai', { 'command': 'face-start' });
         }
@@ -106,7 +103,7 @@ io.sockets.on('connection', function (socket) {
           socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
         }
       }
-      if (parsedCommand[0] == 'red') {
+      else if (parsedCommand[0] == 'red') {
         if (parsedCommand[1] == 'begin') {
           socket.broadcast.emit('robot ai', { 'command': 'red-start' });
         }
@@ -114,10 +111,17 @@ io.sockets.on('connection', function (socket) {
           socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
         }
       }
+      else {    // parsedCommand[0] = 'stop'
+        steerChange(stringValues['neutral']);
+        accelChange(stringValues['stop']);
+      }
     }
   });
   socket.on('robot update', function (data) {
-    socket.broadcast.emit('robot status', { 'data': data });
+    var updatedData = data.data;
+    updatedData['Arduino Attached'] = serverStatus.hasArduino;
+    
+    socket.broadcast.emit('robot status', { 'data': updatedData });
     socket.broadcast.emit('robot camera', {'data': 'check'});
   });
 });

@@ -21,7 +21,7 @@
     </div>
     <div class="container page">
         <div id="useraction-notice" class="alert alert-info"></div>
-        <div id="useraction-connection">
+        <div id="useraction-connection" class="well well-sm">
           <div class="row">
             <div id="connect-formfield">
               <div class="col-md-8">
@@ -43,15 +43,12 @@
         </div>
         <div class="content">
           <div class="row">
-            <div class="picture col-md-8">
+            <div class="picture col-md-6">
               <h4>Robot Camera</h4>
-              <div class="well well-sm">
-                Insert picture here<br>
-                <img id="image-robot-camera" src="car_cam_post.jpeg" alt="Robot Camera">
-              </div>
+              <img id="image-robot-camera" src="car_cam_post.jpeg" alt="Robot Camera">
             </div>
-            <div class="col-md-4">
-              <button type="button" id="emergency-stop" class="btn btn-danger btn-block">Stop</button>
+            <div class="col-md-6">
+              <button type="button" id="emergency-stop" class="btn btn-danger btn-block">Emergency Stop</button>
               <div class="row">
                 <h4>Robot Mode</h4>
                 <ul id="robot_mode" class="nav nav-tabs">
@@ -128,7 +125,7 @@
       
         $('#robot_mode a').click(function (e) {
           e.preventDefault();
-          sendCommand('change-mode');
+          //sendCommand('change-mode');
           console.log('Robot Mode Changed');
           $(this).tab('show');
         });
@@ -196,9 +193,11 @@
             robotReady = true;
           }
           else {
+            var newStatus = '<tr><th>Data</th><th>Value</th></tr>\n';
             for (var key in status) {
-              //status[key];
+              newStatus += '<tr><td>' + key + '</td><td>' + status[key] + '</td></tr>\n';
             }
+            $("#robot-status").html(newStatus);
           }
         });
         

@@ -58,8 +58,6 @@ def detect_red(raw_image):
     upper_red = np.array([60,255,255])
     
     mask = cv2.inRange(hsv, lower_red, upper_red)
-    
-    log('-----')
 
 def detect_face(raw_image):
     robot_status ['General'] = 'No face found'
@@ -69,17 +67,18 @@ def detect_face(raw_image):
     for (x,y,w,h) in faces:
         after_image = cv2.rectangle(after_image,(x,y),(x+w,y+h),(255,0,0),2)
         
-        offCenter = x + w/2 - 400/2
+        offCenter = x + w/2 - CAMERA_WIDTH/2
         log("({0}, {1}) {2}x{3}".format(x,y,w,h))
+        log('Off Center: ' + str(offCenter))
         robot_status ['General'] = 'Face found'
         robot_status ['Face Center X'] = 'X: ' + str(x + w/2)
         robot_status ['Face Center Y'] = 'Y: ' + str(y + h/2)
         robot_status ['Face Off Center'] = str(offCenter)
         
-        if offCenter < -5:
+        if offCenter < -40:
             user_commands.append('manual-turn-left')
             robot_status ['Direction'] = 'Left'
-        elif offCenter > 5:
+        elif offCenter > 40:
             user_commands.append('manual-turn-right')
             robot_status ['Direction'] = 'Right'
         else:
@@ -87,25 +86,30 @@ def detect_face(raw_image):
             robot_status ['Direction'] = 'Neutral'
         
         #Adjust acceleration based on face box width
-        if w > 5:
-            pass
-    log('-----')
+        if w < 90:
+            user_commands.append('manual-throttle-forward')
+            robot_status ['Movement'] = 'Forward'
+        elif w > 100:
+            user_commands.append('manual-throttle-reverse')
+            robot_status ['Movement'] = 'Reverse'
+        else:
+            user_commands.append('manual-throttle-stop')
+            robot_status ['Movement'] = 'None'
 
-def update_ai(*data):
-    print '--- Implementing ---'
-    print data['command']
-    if data['command'] = 'face-start':
+def update_ai(data):
+    log('--- Implementing ---')
+    log(data['command'])
+    if data['command'] == 'face-start':
         ai_mode = 'face'
-    elif data['command'] = 'red-start':
+    elif data['command'] == 'red-start':
         ai_mode = 'red'
     #ai-stop
     else:
         ai_mode = ''
-
 #Communicate through socket.io
 with SocketIO('http://localhost', 80) as socketIO:
-    socketIO.on('robot ai', update_ai)
-    
+    #socketIO.on('robot ai', update_ai)
+    ai_mode='face'
     #Streaming through picamera, so initialize outside loop
     with picamera.PiCamera() as camera:
         camera.resolution = (CAMERA_WIDTH, CAMERA_HEIGHT)
@@ -115,7 +119,8 @@ with SocketIO('http://localhost', 80) as socketIO:
             while run_loop:
                 user_commands = []
                 robot_status = {}
-                
+                robot_status ['Has Camera'] = True
+
                 camera.capture('public/camera_shot.jpg', format='jpeg', use_video_port=True)
                 # Construct a numpy array from the stream
                 data = np.fromstring(stream.getvalue(), dtype=np.uint8)

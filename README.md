@@ -39,3 +39,7 @@ Using the Controller
 * Open a web browser to the Raspberry Pi's internet location
 * Enter the Raspberry Pi's address into the field and click the connect button
 * Control the RC Car
+
+Alternate options to run
+* Run the node server when there's no Arduino attached
+ * sudo node server.js noArduino
