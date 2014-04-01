@@ -124,7 +124,7 @@ with SocketIO('http://localhost', 80) as socketIO:
 
                 camera.capture('public/camera_shot.jpg', format='jpeg', use_video_port=True)
                 # Construct a numpy array from the stream
-                data = np.fromstring(stream.getvalue(), dtype=np.uint8)
+                #data = np.fromstring(stream.getvalue(), dtype=np.uint8)
                 #raw_image = cv2.imdecode(data, 1)
                 raw_image = cv2.imread('public/camera_shot.jpg')
                 after_image = raw_image

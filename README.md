@@ -9,7 +9,7 @@ Hardware Requirements
 * Arduino UNO
 * USB connection from RPi to Arduino UNO
 * Wires for power and ground
-* Wires from Aruidno Pin 8/9 to proper servo connection
+* Wires from Aruidno Pin 10/9 to proper servo connection
 
 Libraries Requirements
 ---------------------

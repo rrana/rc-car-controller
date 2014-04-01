@@ -132,7 +132,7 @@ board.on("ready", function() {
       center: false // overrides startAt if true and moves the servo to the center of the range
     }),
     steering: new five.Servo({
-      pin: 8, 
+      pin: 10, 
       range: [40, 100], 
       type: "standard", 
       startAt: 75, 

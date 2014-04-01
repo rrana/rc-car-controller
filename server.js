@@ -34,7 +34,7 @@ if (args.indexOf("noArduino") == -1) {
     center: false         // overrides startAt if true and moves the servo to the center of the range
   }
   var steeringServo = {
-    pin: 8, 
+    pin: 10, 
     range: [40, 100], 
     type: "standard", 
     startAt: 75, 
@@ -134,7 +134,7 @@ io.sockets.on('connection', function (socket) {
 // These should only be called or accessed if "noArduino" is not an option
 
 function steerChange (value) {
-  arduinoServos.steering.move(value);
+  arduinoServos.steering.to(value);
   
   board.repl.inject({
     s: arduinoServos
@@ -149,7 +149,7 @@ function accelChange (value, accelFor) {
     throttleTimeout = setTimeout(function(){accelChange(stringValues['stop'])}, accelFor);
   }
   
-  arduinoServos.acceleration.move(value);
+  arduinoServos.acceleration.to(value);
   
   board.repl.inject({
     s: arduinoServos
