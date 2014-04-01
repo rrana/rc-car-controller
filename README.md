@@ -56,20 +56,8 @@ File Layout
  * updates opencv image in public folder
 * lbpcascade_frontalface.xml - currently used cascade file
 
-To Do
------
-* Fix socket.io client failure in opencv.py
- * Likely reason: socket.io fires a heartbeat to clients, which times out on python script. This causes the connection to drop
-* Have python socket client listen in on a separate thread to take commands from the webpage
- * Might fix previous issue
-* Better range values for RC car servos
-* Use something like "manual-turn-35" instead of "manual-turn-left" for better precision turning
-* Reduce strain on ai commands from opencv.py/server.js to johnny-five, as commands are being dropped
-* Convert camera feed from refreshed jpeg to video (VideoWriter)
-* Integrate voltage regulator and run RPi off the battery
-
-Want List
----------
+Possible Future Enhancements
+----------------------------
 * Nodejs version for opencv and raspi camera
 * Proper 3d printed mounts for RC car components
 * Easier way to configure RC car for use at new locations
