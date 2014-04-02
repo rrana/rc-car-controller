@@ -1,9 +1,9 @@
-"""Robot Controller Script
+"""Robot OpenCV and Controller Script
 
-Retrieve camera information from attached sensors
+Retrieve camera information from stream
 Communicates through sockets with a websocket server
 Applies OpenCV algorithms through video stills
-Streams video and OpenCV results through the socket
+OpenCV results through the socket
 Receives robot commands from socket
 
 """
