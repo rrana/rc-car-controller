@@ -15,23 +15,28 @@ Hardware Requirements
 Libraries Requirements
 ---------------------
 * Socket.io
-* Expressjs
+* Express.js
 * Johnny-five
 * OpenCV
 * RaspiCam
+* ZeroRPC - and ZMQ
 
 Getting the Raspberry Pi Ready
 ------------------------------
 * Update/upgrade OS
  * sudo apt-get update
  * sudo apt-get upgrade
+* Get some additional libraries
+ * sudo apt-get install libzmq-dev
 * Install node modules
- * npm install socket.io express johnny-five opencv raspicam
+ * npm install socket.io express johnny-five opencv raspicam zerorpc
 
 To run opencv.py
 * Install python libraries
  * sudo apt-get install libopencv-dev python-opencv
  * sudo pip install socketIO-client
+ * sudo pip install zerorpc
+
 
 Using the Controller
 -------------------
