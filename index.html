@@ -5,6 +5,7 @@
     <meta charset="utf-8">
 
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/smoothness/jquery-ui-1.10.4.custom.css" rel="stylesheet">
   </head>
   <body>
     <div class="navbar navbar-static-top navbar-default">
@@ -52,7 +53,8 @@
               <div class="row">
                 <h4>Robot Mode</h4>
                 <ul id="robot_mode" class="nav nav-tabs">
-                  <li class="active"><a href="#control-manual">Manual Control</a></li>
+                  <li class="active"><a href="#control-manual">Button Control</a></li>
+                  <li><a href="#control-slider">Slider Control</a></li>
                   <li><a href="#control-face">Face Follow</a></li>
                   <li><a href="#control-line">Line Follow</a></li>
                 </ul>
@@ -78,6 +80,11 @@
                         <button type="button" id="control-manual-turn-right" class="btn btn-info btn-lg btn-block">Turn Right</button>
                       </div>
                     </div>
+                  </div>
+                  <div class="tab-pane" id="control-slider">
+                    <h4>Controls</h4>
+                    <div id="control-slider-steering"></div>
+                    <div id="control-slider-throttle" style="height:100px;"></div>
                   </div>
                   <div class="tab-pane" id="control-face">
                     <h4>Controls</h4>
@@ -109,6 +116,7 @@
         </footer>
     </div>
     <script src="js/jquery.min.js"></script>
+    <script src="js/jquery-ui-1.10.4.custom.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="socket.io/socket.io.js"></script>
     <script type=text/javascript>
@@ -150,6 +158,26 @@
         
         $('#control-red-begin').click(function(){sendCommand('red-begin')});
         $('#control-red-stop').click(function(){sendCommand('red-stop')});
+        
+        $( "#control-slider-steering" ).slider({
+          range: "min",
+          value: 75,
+          min: 0,
+          max: 180,
+          slide: function( event, ui ) {
+            sendCommand('manual-turn-'+ui.value);
+          }
+        });
+        $( "#control-slider-throttle" ).slider({
+          orientation: "vertical",
+          range: "min",
+          value: 90,
+          min: 0,
+          max: 180,
+          slide: function( event, ui ) {
+            sendCommand('manual-throttle-'+ui.value);
+          }
+        });
       });
       
       function keyboardEvent (event) {

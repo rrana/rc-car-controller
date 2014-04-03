@@ -10,15 +10,14 @@
  * * noArduino - skip all johnny-five content
 */
 
+// Consider require('minimist') in the future
 var args = process.argv.slice(2);
-
-// Consider adding option to automatically start python script:
-//http://shapeshed.com/command-line-utilities-with-nodejs/
 
 var express = require('express')
 var app = express()
   , server = require('http').createServer(app)
   , io = require('socket.io').listen(server);
+//var zerorpc = require("zerorpc");
 
 if (args.indexOf("noArduino") == -1) {
   var five = require("johnny-five")
@@ -70,6 +69,8 @@ app.get('/', function (req, res) {
 
 io.sockets.on('connection', function (socket) {
   socket.emit('robot status', { data: 'server connected' });
+  
+  // Robot commands
   socket.on('robot command', function (data) {
     var parsedCommand = data.data.split("-");
     console.log('----- Command: -----');
@@ -122,6 +123,8 @@ io.sockets.on('connection', function (socket) {
       }
     }
   });
+  
+  // Status update - gets forwarded to the webpage
   socket.on('robot update', function (data) {
     var updatedData = data.data;
     updatedData['Arduino Attached'] = serverStatus.hasArduino;
