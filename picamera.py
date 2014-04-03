@@ -19,17 +19,16 @@ CAMERA_HEIGHT = 240
 #general
 server_address = '127.0.0.1'
 server_port = 8000
-continue_recording = True
 
 #command line arguments
 try:
-    opts, args = getopt.getopt(argv,"hs:x:y:",["server=","width=","height="])
+    opts, args = getopt.getopt(argv,"hs:p:x:y:",["server=","port=","width=","height="])
 except getopt.GetoptError:
     print 'improper use of arguments'
     sys.exit(2)
 for opt, arg in opts:
     if opt == '-h':
-        print 'picamera.py: -x/--width for CAMERA_EIDTH, -x/--height for CAMERA_HEIGHT'
+        print 'picamera.py: -s/--server for server address, -p/--port for port,\n   -x/--width for CAMERA_EIDTH, -x/--height for CAMERA_HEIGHT'
         sys.exit()
     #server address
     elif opt in ("-s", "--server"):

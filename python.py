@@ -1,4 +1,8 @@
-"""Robot OpenCV and Controller Script
+"""
+TEMPORARY placeholder for camera opencv python script
+to be deleted once opencv.py is confirmed to work
+--
+Robot OpenCV and Controller Script
 
 Retrieve camera information from stream
 Communicates through sockets with a websocket server
@@ -8,49 +12,35 @@ Receives robot commands from socket
 
 """
 
-import socket
-import subprocess
-
 import os
 import json
 import io
 import datetime
 import time
+import picamera
 import cv2
 import numpy as np
 import serial
 import glob
 from socketIO_client import SocketIO
 
-#ai - manual control is now directly handled by the node.js server
+#constants: read from JSON file in the future
+CAMERA_WIDTH = 320
+CAMERA_HEIGHT = 240
+
+#ai
+#manual control is now directly handled by the node.js server
 ai_mode = '';
 #face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier('lbpcascade_frontalface.xml')
 
 #general
 run_loop = True
-server_port = 8000
 stream = io.BytesIO()
 robot_status = {}
 user_commands = []
 after_image = '';
 
-#command line arguments
-try:
-    opts, args = getopt.getopt(argv,"hp:",["port="])
-except getopt.GetoptError:
-    print 'improper use of arguments'
-    sys.exit(2)
-for opt, arg in opts:
-    if opt == '-h':
-        print 'opencv.py: -p for port'
-        sys.exit()
-    #port to listen to address
-    elif opt in ("-p", "--port"):
-        server_port = int(arg)
-
-
-# ----- Functions -----
 def log(text):
     print text
 
@@ -90,8 +80,6 @@ def detect_face(raw_image):
         robot_status ['Face Center Y'] = 'Y: ' + str(y + h/2)
         robot_status ['Face Off Center'] = str(offCenter)
         
-        #### These should be moved to a separate section
-        #Robot commands based on opencv results
         if offCenter < -40:
             user_commands.append('manual-turn-left')
             robot_status ['Direction'] = 'Left'
@@ -113,7 +101,6 @@ def detect_face(raw_image):
             user_commands.append('manual-throttle-stop')
             robot_status ['Movement'] = 'None'
 
-#change ai logic / opencv type to be applied
 def update_ai(data):
     log('--- Implementing ---')
     log(data['command'])
@@ -124,49 +111,34 @@ def update_ai(data):
     #ai-stop
     else:
         ai_mode = ''
-
-
-# ----- On Start -----
-
-#listen to for socket connections
-server_socket = socket.socket()
-server_socket.bind(('0.0.0.0', server_port))
-server_socket.listen(0)
-
-#read connection (only one) into a file object
-connection = server_socket.accept()[0].makefile('rb')
-
 #Communicate through socket.io
 with SocketIO('http://localhost', 80) as socketIO:
     #socketIO.on('robot ai', update_ai)
     ai_mode='face'
-    try:
-        #start up a video viewer
-        #cmdline = ['vlc', '--demux', 'h264', '-']
-        #cmdline = ['mplayer', '-fps', '31', '-cache', '1024', '-']
-        #player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
-        while run_loop:
-            data = connection.read(1024)
-            user_commands = []
-            robot_status = {'Timestamp': str(datetime.datetime.now())}
-            robot_status ['Has Camera'] = True
+    #Streaming through picamera, so initialize outside loop
+    with picamera.PiCamera() as camera:
+        camera.resolution = (CAMERA_WIDTH, CAMERA_HEIGHT)
+        camera.start_recording(stream, format='h264')
+        camera.start_preview()
+        try:
+            while run_loop:
+                user_commands = []
+                robot_status = {'Timestamp': str(datetime.datetime.now())}
+                robot_status ['Has Camera'] = True
 
-            #camera.capture('public/camera_shot.jpg', format='jpeg', use_video_port=True)
-            raw_image = cv2.imdecode(data, 1)
-            
-            # Construct a numpy array from the stream
-            #data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-            #raw_image = cv2.imread('public/camera_shot.jpg')
-            after_image = raw_image
-            if ai_mode:
-                ai_step (raw_image)
-                cv2.imwrite("public/car_cam_post.jpeg", after_image)
-                
-                socketIO.emit('robot update', {'data': robot_status})
-                for command in user_commands:
-                    socketIO.emit('robot command', {'data': command})
-                    log('Command: ' + str(command))
-    finally:
-        connection.close()
-        server_socket.close()
-        #player.terminate()
+                camera.capture('public/camera_shot.jpg', format='jpeg', use_video_port=True)
+                # Construct a numpy array from the stream
+                #data = np.fromstring(stream.getvalue(), dtype=np.uint8)
+                #raw_image = cv2.imdecode(data, 1)
+                raw_image = cv2.imread('public/camera_shot.jpg')
+                after_image = raw_image
+                if ai_mode:
+                    ai_step (raw_image)
+                    cv2.imwrite("public/car_cam_post.jpeg", after_image)
+                    
+                    socketIO.emit('robot update', {'data': robot_status})
+                    for command in user_commands:
+                        socketIO.emit('robot command', {'data': command})
+                        log('Command: ' + str(command))
+        finally:
+            camera.stop_recording()
