@@ -4,6 +4,9 @@ var server = new zerorpc.Server({
     hello: function(name, reply) {
         console.log(name);
         reply("Hello, " + name);
+    },
+    hi: function(name, reply) {
+        console.log(name);
     }
 });
 

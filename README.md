@@ -33,7 +33,7 @@ Getting the Raspberry Pi Ready
 
 To run opencv.py
 * Install python libraries
- * sudo apt-get install libopencv-dev python-opencv
+ * sudo apt-get install libopencv-dev python-opencv python-dev
  * sudo pip install socketIO-client
  * sudo pip install zerorpc
 

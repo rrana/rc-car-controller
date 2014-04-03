@@ -1,3 +1,0 @@
-gevent
-msgpack-python
-pyzmq==13.1.0
