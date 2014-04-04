@@ -65,26 +65,45 @@
                     <div class="row">
                       <div class="col-sm-4"></div>
                       <div class="col-sm-4">
-                        <button type="button" id="control-manual-forward-slow" class="btn btn-info btn-lg btn-block">Forward</button>
+                        <button type="button" id="control-manual-forward-slow" class="btn btn-info btn-lg btn-block">Forward (up)</button>
                       </div>
                       <div class="col-sm-4"></div>
                     </div>
                     <div class="row">
                       <div class="col-sm-4">
-                        <button type="button" id="control-manual-turn-left" class="btn btn-info btn-lg btn-block">Turn Left</button>
+                        <button type="button" id="control-manual-turn-left" class="btn btn-info btn-lg btn-block">Turn Left (left)</button>
                       </div>
                       <div class="col-sm-4">
-                        <button type="button" id="control-manual-reverse-slow" class="btn btn-info btn-lg btn-block">Backward</button>
+                        <button type="button" id="control-manual-reverse-slow" class="btn btn-info btn-lg btn-block">Backward (down)</button>
                       </div>
                       <div class="col-sm-4">
-                        <button type="button" id="control-manual-turn-right" class="btn btn-info btn-lg btn-block">Turn Right</button>
+                        <button type="button" id="control-manual-turn-right" class="btn btn-info btn-lg btn-block">Turn Right (right)</button>
                       </div>
                     </div>
                   </div>
                   <div class="tab-pane" id="control-slider">
                     <h4>Controls</h4>
-                    <div id="control-slider-steering"></div>
-                    <div id="control-slider-throttle" style="height:100px;"></div>
+                    <div class="row">
+                      <div class="col-sm-6">
+                        <h5>Steering</h5>
+                        <div id="control-slider-steering"></div>
+                        <br>
+                        <span id="control-slider-steering-value" class="badge">---</span>
+                        <button type="button" id="control-manual-neutral" class="btn btn-warning">Reset</button>
+                      </div>
+                      <div class="col-sm-6">
+                        <h5>Throttle</h5>
+                        <div class="row">
+                          <div class="col-sm-3">
+                            <div id="control-slider-throttle" style="height:100px;"></div>
+                            </div>
+                          <div class="col-sm-9">
+                            <span id="control-slider-throttle-value" class="badge">---</span>
+                            <button type="button" id="control-manual-stop" class="btn btn-warning">Reset</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div class="tab-pane" id="control-face">
                     <h4>Controls</h4>
@@ -165,20 +184,34 @@
           min: 0,
           max: 180,
           slide: function( event, ui ) {
+            $('#control-slider-steering-value').text(ui.value);
             sendCommand('manual-turn-'+ui.value);
           }
         });
-        $( "#control-slider-throttle" ).slider({
+        $('#control-manual-neutral').click(function(){
+          $('#control-slider-steering').slider ('value', 75);
+          $('#control-slider-steering-value').text(75);
+          sendCommand('manual-turn-neutral');
+        });
+        $('#control-slider-throttle').slider({
           orientation: "vertical",
           range: "min",
           value: 90,
           min: 0,
           max: 180,
           slide: function( event, ui ) {
+            $('#control-slider-throttle-value').text(ui.value);
             sendCommand('manual-throttle-'+ui.value);
           }
         });
+        $('#control-manual-stop').click(function(){
+          $('#control-slider-throttle').slider ('value', 90);
+          $('#control-slider-throttle-value').text(90);
+          sendCommand('manual-throttle-stop');
+        });
       });
+      $('#control-slider-steering-value').text(75);
+      $('#control-slider-throttle-value').text(90);
       
       function keyboardEvent (event) {
         if (event.type == 'keyup') {
