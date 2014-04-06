@@ -67,6 +67,60 @@ app.get('/', function (req, res) {
   res.sendfile(__dirname + '/index.html');
 });
 
+app.get('/command/', function (req, res) {
+  var parsedCommand = req.query.command.split("-");
+  console.log('----- Command: -----');
+  console.log(parsedCommand);
+  
+  if (serverStatus.hasArduino) {
+    // Manual commands
+    if (parsedCommand[0] == 'manual') {
+      if (parsedCommand[1] == 'throttle') {
+        if (parsedCommand.length < 4) {
+          parsedCommand[3] = stringValues['throttleTime'];
+        }
+        if (parsedCommand[2] in stringValues) {
+          accelChange(stringValues[parsedCommand[2]], parsedCommand[3]);
+        }
+        else {
+          accelChange(parseInt(parsedCommand[2]), parsedCommand[3]);
+        }
+      }
+      else if (parsedCommand[1] == 'turn') {
+        if (parsedCommand[2] in stringValues) {
+          steerChange(stringValues[parsedCommand[2]]);
+        }
+        else {
+          steerChange(parseInt(parsedCommand[2]));
+        }
+      }
+    }
+    // AI commands
+    else if (parsedCommand[0] == 'face') {
+      console.log('facing');
+      if (parsedCommand[1] == 'begin') {
+        socket.broadcast.emit('robot ai', { 'command': 'face-start' });
+      }
+      else {
+        socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
+      }
+    }
+    else if (parsedCommand[0] == 'red') {
+      if (parsedCommand[1] == 'begin') {
+        socket.broadcast.emit('robot ai', { 'command': 'red-start' });
+      }
+      else {
+        socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
+      }
+    }
+    else {    // parsedCommand[0] = 'stop'
+      steerChange(stringValues['neutral']);
+      accelChange(stringValues['stop']);
+    }
+  }
+  res.send('command: ' + req.query.command);
+});
+
 io.sockets.on('connection', function (socket) {
   socket.emit('robot status', { data: 'server connected' });
   

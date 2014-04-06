@@ -8,24 +8,95 @@ Receives robot commands from socket
 
 """
 
-import socket
-import subprocess
-
-import os
-import json
 import io
+import socket
+import struct
 import datetime
 import time
-import cv2
+import sys, getopt
 import numpy as np
-import serial
-import glob
-from socketIO_client import SocketIO
+import cv2
+import urllib2
 
-#ai - manual control is now directly handled by the node.js server
-ai_mode = '';
-#face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+def detect_face(raw_image):
+    notFound = True
+    robot_status ['General'] = 'No face found'
+    after_image = raw_image
+    gray = cv2.cvtColor(raw_image,cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    for (x,y,w,h) in faces:
+        if (notFound):
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(255,255,0),2)
+            move_command(x, y, w, h)
+            notFound = False
+        else:
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(255,0,0),2)
+    
+    bodies = body_cascade.detectMultiScale(gray, 1.3, 5)
+    for (x,y,w,h) in bodies:
+        if (notFound):
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(255,255,0),2)
+            move_command(x, y, w, h)
+            notFound = False
+        else:
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(0,255,0),2)
+    
+    uppers = upper_cascade.detectMultiScale(gray, 1.3, 5)
+    for (x,y,w,h) in uppers:
+        if (notFound):
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(255,255,0),2)
+            move_command(x, y, w, h)
+            notFound = False
+        else:
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(0,0,255),2)
+    
+    uppers2 = upper2_cascade.detectMultiScale(gray, 1.3, 5)
+    for (x,y,w,h) in uppers2:
+        if (notFound):
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(255,255,0),2)
+            move_command(x, y, w, h)
+            notFound = False
+        else:
+            cv2.rectangle(after_image,(x,y),(x+w,y+h),(0,255,255),2)
+    
+    return after_image
+
+def move_command(x, y, w, h):
+    offCenter = x + w/2 - CAMERA_WIDTH/2
+    print "({0}, {1}) {2}x{3}".format(x,y,w,h)
+    print 'Off Center: ' + str(offCenter)
+    robot_status ['General'] = 'Face found'
+    robot_status ['Face Center X'] = 'X: ' + str(x + w/2)
+    robot_status ['Face Center Y'] = 'Y: ' + str(y + h/2)
+    robot_status ['Face Off Center'] = str(offCenter)
+    
+    if offCenter < -40:
+        user_commands.append('manual-turn-left')
+        robot_status ['Direction'] = 'Left'
+    elif offCenter > 40:
+        user_commands.append('manual-turn-right')
+        robot_status ['Direction'] = 'Right'
+    else:
+        user_commands.append('manual-turn-neutral')
+        robot_status ['Direction'] = 'Neutral'
+    
+    #Adjust acceleration based on face box width
+    if w < 150:
+        user_commands.append('manual-throttle-forward')
+        robot_status ['Movement'] = 'Forward'
+    elif w > 200:
+        user_commands.append('manual-throttle-reverse')
+        robot_status ['Movement'] = 'Reverse'
+    else:
+        user_commands.append('manual-throttle-stop')
+        robot_status ['Movement'] = 'None'
+
+CAMERA_WIDTH = 320
+CAMERA_HEIGHT = 240
 face_cascade = cv2.CascadeClassifier('lbpcascade_frontalface.xml')
+body_cascade = cv2.CascadeClassifier('haarcascade_fullbody.xml')
+upper_cascade = cv2.CascadeClassifier('haarcascade_upperbody.xml')
+upper2_cascade = cv2.CascadeClassifier('haarcascade_mcs_upperbody.xml')
 
 #general
 run_loop = True
@@ -37,7 +108,7 @@ after_image = '';
 
 #command line arguments
 try:
-    opts, args = getopt.getopt(argv,"hp:",["port="])
+    opts, args = getopt.getopt(sys.argv,"hp:",["port="])
 except getopt.GetoptError:
     print 'improper use of arguments'
     sys.exit(2)
@@ -49,124 +120,48 @@ for opt, arg in opts:
     elif opt in ("-p", "--port"):
         server_port = int(arg)
 
-
-# ----- Functions -----
-def log(text):
-    print text
-
-def ai_step(raw_image):
-    #Generate desired heading and direction given a robot mode
-    if ai_mode == 'red':
-        robot_status = detect_red(raw_image)
-    elif ai_mode == 'face':
-        robot_status = detect_face(raw_image)
-    
-    if robot_status:
-        pass
-
-def detect_red(raw_image):
-    #convert to HSV
-    hsv = cv2.cvtColor(raw_image, cv2.COLOR_BGR2HSV)
-    
-    #http://docs.opencv.org/trunk/doc/py_tutorials/py_imgproc/py_colorspaces/py_colorspaces.html
-    lower_red = np.array([60,50,50])
-    upper_red = np.array([60,255,255])
-    
-    mask = cv2.inRange(hsv, lower_red, upper_red)
-
-def detect_face(raw_image):
-    robot_status ['General'] = 'No face found'
-    after_image = raw_image
-    gray = cv2.cvtColor(raw_image,cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-    for (x,y,w,h) in faces:
-        after_image = cv2.rectangle(after_image,(x,y),(x+w,y+h),(255,0,0),2)
-        
-        offCenter = x + w/2 - CAMERA_WIDTH/2
-        log("({0}, {1}) {2}x{3}".format(x,y,w,h))
-        log('Off Center: ' + str(offCenter))
-        robot_status ['General'] = 'Face found'
-        robot_status ['Face Center X'] = 'X: ' + str(x + w/2)
-        robot_status ['Face Center Y'] = 'Y: ' + str(y + h/2)
-        robot_status ['Face Off Center'] = str(offCenter)
-        
-        #### These should be moved to a separate section
-        #Robot commands based on opencv results
-        if offCenter < -40:
-            user_commands.append('manual-turn-left')
-            robot_status ['Direction'] = 'Left'
-        elif offCenter > 40:
-            user_commands.append('manual-turn-right')
-            robot_status ['Direction'] = 'Right'
-        else:
-            user_commands.append('manual-turn-neutral')
-            robot_status ['Direction'] = 'Neutral'
-        
-        #Adjust acceleration based on face box width
-        if w < 90:
-            user_commands.append('manual-throttle-forward')
-            robot_status ['Movement'] = 'Forward'
-        elif w > 100:
-            user_commands.append('manual-throttle-reverse')
-            robot_status ['Movement'] = 'Reverse'
-        else:
-            user_commands.append('manual-throttle-stop')
-            robot_status ['Movement'] = 'None'
-
-#change ai logic / opencv type to be applied
-def update_ai(data):
-    log('--- Implementing ---')
-    log(data['command'])
-    if data['command'] == 'face-start':
-        ai_mode = 'face'
-    elif data['command'] == 'red-start':
-        ai_mode = 'red'
-    #ai-stop
-    else:
-        ai_mode = ''
-
-
-# ----- On Start -----
-
-#listen to for socket connections
+# Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
+# all interfaces)
 server_socket = socket.socket()
-server_socket.bind(('0.0.0.0', server_port))
+server_socket.bind(('0.0.0.0', 8000))
 server_socket.listen(0)
 
-#read connection (only one) into a file object
+# Accept a single connection and make a file-like object out of it
 connection = server_socket.accept()[0].makefile('rb')
-
-#Communicate through socket.io
-with SocketIO('http://localhost', 80) as socketIO:
-    #socketIO.on('robot ai', update_ai)
-    ai_mode='face'
-    try:
-        #start up a video viewer
-        #cmdline = ['vlc', '--demux', 'h264', '-']
-        #cmdline = ['mplayer', '-fps', '31', '-cache', '1024', '-']
-        #player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
-        while run_loop:
-            data = connection.read(1024)
-            user_commands = []
-            robot_status = {'Timestamp': str(datetime.datetime.now())}
-            robot_status ['Has Camera'] = True
-
-            #camera.capture('public/camera_shot.jpg', format='jpeg', use_video_port=True)
-            raw_image = cv2.imdecode(data, 1)
-            
-            # Construct a numpy array from the stream
-            #data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-            #raw_image = cv2.imread('public/camera_shot.jpg')
-            after_image = raw_image
-            if ai_mode:
-                ai_step (raw_image)
-                cv2.imwrite("public/car_cam_post.jpeg", after_image)
-                
-                socketIO.emit('robot update', {'data': robot_status})
-                for command in user_commands:
-                    socketIO.emit('robot command', {'data': command})
-                    log('Command: ' + str(command))
-    finally:
-        connection.close()
-        server_socket.close()
-        #player.terminate()
+#try:
+if True:
+    while run_loop:
+        user_commands = []
+        robot_status = {'Timestamp': str(datetime.datetime.now())}
+        robot_status ['Has Camera'] = True
+        # Read the length of the image as a 32-bit unsigned int. If the
+        # length is zero, quit the loop
+        image_len = struct.unpack('<L', connection.read(4))[0]
+        if not image_len:
+            print 'not image_len'
+            continue
+        # Construct a stream to hold the image data and read the image
+        # data from the connection
+        image_stream = io.BytesIO()
+        image_stream.write(connection.read(image_len))
+        # Rewind the stream, open it as an image with PIL and do some
+        # processing on it
+        image_stream.seek(0)
+        data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
+        image = cv2.imdecode(data, 1)
+        
+        new_image = detect_face(image)
+        
+        # Display the resulting frame
+        cv2.imshow('camera',new_image)
+        print('Image is processed')
+        for command in user_commands:
+            response = urllib2.urlopen('http://192.168.1.3/command/?command='+command).read()
+            print response
+        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+#finally:
+connection.close()
+server_socket.close()
+cv2.destroyAllWindows()
