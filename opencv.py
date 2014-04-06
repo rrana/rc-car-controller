@@ -100,6 +100,7 @@ upper2_cascade = cv2.CascadeClassifier('haarcascade_mcs_upperbody.xml')
 
 #general
 run_loop = True
+server_address = 'http://127.0.0.1'
 server_port = 8000
 stream = io.BytesIO()
 robot_status = {}
@@ -108,7 +109,7 @@ after_image = '';
 
 #command line arguments
 try:
-    opts, args = getopt.getopt(sys.argv,"hp:",["port="])
+    opts, args = getopt.getopt(sys.argv,"hs:p:",["server=","port="])
 except getopt.GetoptError:
     print 'improper use of arguments'
     sys.exit(2)
@@ -117,6 +118,8 @@ for opt, arg in opts:
         print 'opencv.py: -p for port'
         sys.exit()
     #port to listen to address
+    elif opt in ("-s", "--server"):
+        server_address = arg
     elif opt in ("-p", "--port"):
         server_port = int(arg)
 
@@ -156,7 +159,7 @@ if True:
         cv2.imshow('camera',new_image)
         print('Image is processed')
         for command in user_commands:
-            response = urllib2.urlopen('http://192.168.1.3/command/?command='+command).read()
+            response = urllib2.urlopen(server_address+'/command/?command='+command).read()
             print response
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
