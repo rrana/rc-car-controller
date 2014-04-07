@@ -19,24 +19,20 @@ Libraries Requirements
 * Johnny-five
 * OpenCV
 * RaspiCam
-* ZeroRPC - and ZMQ
 
 Getting the Raspberry Pi Ready
 ------------------------------
 * Update/upgrade OS
  * sudo apt-get update
  * sudo apt-get upgrade
-* Get some additional libraries
- * sudo apt-get install libzmq-dev
 * Install node modules
- * npm install socket.io express johnny-five opencv raspicam zerorpc
+ * npm install socket.io express johnny-five opencv raspicam
 
 To run opencv.py
 * Install python libraries
  * sudo apt-get install libopencv-dev python-opencv python-dev
+* Only for old_opencv.py - not needed otherwise
  * sudo pip install socketIO-client
- * sudo pip install zerorpc
-
 
 Using the Controller
 -------------------
@@ -63,8 +59,16 @@ File Layout
 * lbpcascade_frontalface.xml - currently used cascade file
 
 Possible Future Enhancements
-----------------------------
+-----------------------------
 * Nodejs version for opencv and raspi camera
 * Proper 3d printed mounts for RC car components
 * Easier way to configure RC car for use at new locations
 * Stream OpenCV video to the internet
+
+Possible Future Library Requirements
+-----------------------------------
+* ZeroRPC - and ZMQ
+ * sudo apt-get install libzmq-dev
+ * npm install zerorpc
+ * sudo pip install zerorpc
+ 
