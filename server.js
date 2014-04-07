@@ -67,13 +67,39 @@ app.get('/', function (req, res) {
   res.sendfile(__dirname + '/index.html');
 });
 
+// allow commands to be send via http call
 app.get('/command/', function (req, res) {
-  var parsedCommand = req.query.command.split("-");
+  processRobotCommand (req.query.command);
+  res.send('command: ' + req.query.command);
+  
+  // Eventually replace with json so commands can be sent back
+  //res.json({ 'command': 'face-start' });
+});
+
+io.sockets.on('connection', function (socket) {
+  socket.emit('robot status', { data: 'server connected' });
+  
+  // Robot commands
+  socket.on('robot command', function (data) {
+    processRobotCommand (data.data);
+  });
+  
+  // Status update - gets forwarded to the webpage
+  socket.on('robot update', function (data) {
+    var updatedData = data.data;
+    updatedData['Arduino Attached'] = serverStatus.hasArduino;
+    
+    socket.broadcast.emit('robot status', { 'data': updatedData });
+  });
+});
+
+function processRobotCommand (command) {
+  var parsedCommand = command.split("-");
   console.log('----- Command: -----');
   console.log(parsedCommand);
   
   if (serverStatus.hasArduino) {
-    // Manual commands
+    // Manual commands - johnny five
     if (parsedCommand[0] == 'manual') {
       if (parsedCommand[1] == 'throttle') {
         if (parsedCommand.length < 4) {
@@ -95,7 +121,7 @@ app.get('/command/', function (req, res) {
         }
       }
     }
-    // AI commands
+    // AI commands - to be forwarded to opencv
     else if (parsedCommand[0] == 'face') {
       console.log('facing');
       if (parsedCommand[1] == 'begin') {
@@ -118,74 +144,7 @@ app.get('/command/', function (req, res) {
       accelChange(stringValues['stop']);
     }
   }
-  res.send('command: ' + req.query.command);
-});
-
-io.sockets.on('connection', function (socket) {
-  socket.emit('robot status', { data: 'server connected' });
-  
-  // Robot commands
-  socket.on('robot command', function (data) {
-    var parsedCommand = data.data.split("-");
-    console.log('----- Command: -----');
-    console.log(parsedCommand);
-    
-    if (serverStatus.hasArduino) {
-      // Manual commands
-      if (parsedCommand[0] == 'manual') {
-        if (parsedCommand[1] == 'throttle') {
-          if (parsedCommand.length < 4) {
-            parsedCommand[3] = stringValues['throttleTime'];
-          }
-          if (parsedCommand[2] in stringValues) {
-            accelChange(stringValues[parsedCommand[2]], parsedCommand[3]);
-          }
-          else {
-            accelChange(parseInt(parsedCommand[2]), parsedCommand[3]);
-          }
-        }
-        else if (parsedCommand[1] == 'turn') {
-          if (parsedCommand[2] in stringValues) {
-            steerChange(stringValues[parsedCommand[2]]);
-          }
-          else {
-            steerChange(parseInt(parsedCommand[2]));
-          }
-        }
-      }
-      // AI commands
-      else if (parsedCommand[0] == 'face') {
-        console.log('facing');
-        if (parsedCommand[1] == 'begin') {
-          socket.broadcast.emit('robot ai', { 'command': 'face-start' });
-        }
-        else {
-          socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
-        }
-      }
-      else if (parsedCommand[0] == 'red') {
-        if (parsedCommand[1] == 'begin') {
-          socket.broadcast.emit('robot ai', { 'command': 'red-start' });
-        }
-        else {
-          socket.broadcast.emit('robot ai', { 'command': 'ai-stop' });
-        }
-      }
-      else {    // parsedCommand[0] = 'stop'
-        steerChange(stringValues['neutral']);
-        accelChange(stringValues['stop']);
-      }
-    }
-  });
-  
-  // Status update - gets forwarded to the webpage
-  socket.on('robot update', function (data) {
-    var updatedData = data.data;
-    updatedData['Arduino Attached'] = serverStatus.hasArduino;
-    
-    socket.broadcast.emit('robot status', { 'data': updatedData });
-  });
-});
+}
 
 // ----- Johnny Five -----
 // These should only be called or accessed if "noArduino" is not an option
@@ -199,6 +158,7 @@ function steerChange (value) {
 }
 
 function accelChange (value, accelFor) {
+  // Throttle has an automatic timeout so car doesn't run into things
   if (accelFor) {
     if (throttleTimeout) {
       clearTimeout(throttleTimeout);
