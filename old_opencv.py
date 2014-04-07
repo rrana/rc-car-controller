@@ -32,7 +32,7 @@ CAMERA_HEIGHT = 240
 #manual control is now directly handled by the node.js server
 ai_mode = '';
 #face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-face_cascade = cv2.CascadeClassifier('lbpcascade_frontalface.xml')
+face_cascade = cv2.CascadeClassifier('cascade_files/lbpcascade_frontalface.xml')
 
 #general
 run_loop = True

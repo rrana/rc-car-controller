@@ -18,6 +18,47 @@ import numpy as np
 import cv2
 import urllib2
 
+CAMERA_WIDTH = 320
+CAMERA_HEIGHT = 240
+face_cascade = cv2.CascadeClassifier('cascade_files/lbpcascade_frontalface.xml')
+body_cascade = cv2.CascadeClassifier('cascade_files/haarcascade_fullbody.xml')
+upper_cascade = cv2.CascadeClassifier('cascade_files/haarcascade_upperbody.xml')
+upper2_cascade = cv2.CascadeClassifier('cascade_files/haarcascade_mcs_upperbody.xml')
+
+#general
+run_loop = True
+server_address = 'http://127.0.0.1'
+server_port = 8000
+stream = io.BytesIO()
+robot_status = {}
+user_commands = []
+after_image = '';
+
+#command line arguments
+try:
+    opts, args = getopt.getopt(sys.argv,"hs:p:",["server=","port="])
+except getopt.GetoptError:
+    print 'improper use of arguments'
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-h':
+        print 'opencv.py: -p for port'
+        sys.exit()
+    #port to listen to address
+    elif opt in ("-s", "--server"):
+        server_address = arg
+    elif opt in ("-p", "--port"):
+        server_port = int(arg)
+
+# Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
+# all interfaces)
+server_socket = socket.socket()
+server_socket.bind(('0.0.0.0', 8000))
+server_socket.listen(0)
+
+# Accept a single connection and make a file-like object out of it
+connection = server_socket.accept()[0].makefile('rb')
+
 def detect_face(raw_image):
     notFound = True
     robot_status ['General'] = 'No face found'
@@ -61,6 +102,7 @@ def detect_face(raw_image):
     
     return after_image
 
+#generate movement command based on cascade detection box properties
 def move_command(x, y, w, h):
     offCenter = x + w/2 - CAMERA_WIDTH/2
     print "({0}, {1}) {2}x{3}".format(x,y,w,h)
@@ -91,48 +133,8 @@ def move_command(x, y, w, h):
         user_commands.append('manual-throttle-stop')
         robot_status ['Movement'] = 'None'
 
-CAMERA_WIDTH = 320
-CAMERA_HEIGHT = 240
-face_cascade = cv2.CascadeClassifier('lbpcascade_frontalface.xml')
-body_cascade = cv2.CascadeClassifier('haarcascade_fullbody.xml')
-upper_cascade = cv2.CascadeClassifier('haarcascade_upperbody.xml')
-upper2_cascade = cv2.CascadeClassifier('haarcascade_mcs_upperbody.xml')
-
-#general
-run_loop = True
-server_address = 'http://127.0.0.1'
-server_port = 8000
-stream = io.BytesIO()
-robot_status = {}
-user_commands = []
-after_image = '';
-
-#command line arguments
+# ----- Main Operation -----
 try:
-    opts, args = getopt.getopt(sys.argv,"hs:p:",["server=","port="])
-except getopt.GetoptError:
-    print 'improper use of arguments'
-    sys.exit(2)
-for opt, arg in opts:
-    if opt == '-h':
-        print 'opencv.py: -p for port'
-        sys.exit()
-    #port to listen to address
-    elif opt in ("-s", "--server"):
-        server_address = arg
-    elif opt in ("-p", "--port"):
-        server_port = int(arg)
-
-# Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
-# all interfaces)
-server_socket = socket.socket()
-server_socket.bind(('0.0.0.0', 8000))
-server_socket.listen(0)
-
-# Accept a single connection and make a file-like object out of it
-connection = server_socket.accept()[0].makefile('rb')
-#try:
-if True:
     while run_loop:
         user_commands = []
         robot_status = {'Timestamp': str(datetime.datetime.now())}
@@ -164,7 +166,7 @@ if True:
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-#finally:
-connection.close()
-server_socket.close()
-cv2.destroyAllWindows()
+finally:
+    connection.close()
+    server_socket.close()
+    cv2.destroyAllWindows()
