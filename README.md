@@ -19,6 +19,8 @@ Libraries Requirements
 * Johnny-five
 * OpenCV
 * RaspiCam
+* Python OpenCV
+* Python PiCamera
 
 Getting the Raspberry Pi Ready
 ------------------------------
@@ -30,7 +32,7 @@ Getting the Raspberry Pi Ready
 
 To run opencv.py
 * Install python libraries
- * sudo apt-get install libopencv-dev python-opencv python-dev
+ * sudo apt-get install libopencv-dev python-opencv python-dev python-picamera
 * Only for old_opencv.py - not needed otherwise
  * sudo pip install socketIO-client
 
